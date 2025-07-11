@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tavuk Kümesi Takibi</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: Arial, sans-serif;
+      background: #101820;
+      color: #ffffff;
+    }
+
+    h1 {
+      color: #ffcc00;
+      font-size: 2.2em;
+    }
+
+    p {
+      max-width: 700px;
+      line-height: 1.6;
+      font-size: 1.1em;
+    }
+
+    a {
+      color: #ffaa00;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .back-link {
+      margin-top: 30px;
+      display: inline-block;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tavuk Kümesi Takip Sistemi</h1>
+  <p>Bu projede bir köyde bulunan tavuk kümesindeki sıcaklık ve nem değerlerini şehirden takip etmek amacıyla bir sistem geliştirdim. Kullanılan başlıca donanımlar:</p>
+  <ul>
+    <li>ESP-01 Wi-Fi modülü</li>
+    <li>DHT11 veya DHT22 sıcaklık/nem sensörü</li>
+    <li>5V adaptör, breadboard, jumper kablolar</li>
+  </ul>
+  <p>ESP-01 modülü belirli aralıklarla sensörden veri okuyup, bunları internete (örneğin Blynk, ThingSpeak veya özel sunucuya) gönderiyor. Böylece mobil cihazdan kolayca takip yapılabiliyor.</p>
+
+  <p class="back-link"><a href="index.html">← Ana sayfaya dön</a></p>
+</body>
+</html>
