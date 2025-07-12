@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not Defterim</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        /* Buton Stili */
+        #addNoteBtn {
+            background: #4285F4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        /* Modal (Açılır Pencere) */
+        #noteModal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 80%;
+            max-width: 500px;
+        }
+        #noteInput {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #saveNoteBtn {
+            background: #34A853;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        /* Not Kartları */
+        .note {
+            background: #FFF9C4;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Not Defterim</h1>
+    <button id="addNoteBtn">Not Ekle</button>
+    <div id="notesContainer"></div>
+
+    <!-- Modal (Açılır Pencere) -->
+    <div id="noteModal">
+        <h2>Yeni Not</h2>
+        <textarea id="noteInput" placeholder="Notunuzu buraya yazın..."></textarea>
+        <button id="saveNoteBtn">Kaydet</button>
+    </div>
+
+    <script src="app.js"></script> <!-- JavaScript dosyası -->
+</body>
+</html>
