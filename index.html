@@ -6,147 +6,66 @@
     <title>Admin Kontrollü Not Defteri</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .note {
-            background: #f5f5f5;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            position: relative;
-        }
-        .delete-btn {
-            position: absolute;
-            right: 10px;
-            top: 10px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-        #adminPanel {
+        /* Önceki CSS kodları aynen kalacak */
+        .auth-dialog {
+            display: none;
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #f0f0f0;
-            padding: 10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        #authStatus {
-            margin-top: 10px;
-            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
-    <h1><i class="fas fa-lock"></i> Admin Kontrollü Not Defteri</h1>
-    <div id="notesContainer"></div>
+    <!-- Önceki HTML yapısı aynen kalacak -->
 
-    <div id="adminPanel">
-        <div id="authStatus">Giriş yapılmadı</div>
-        <button id="authBtn" onclick="handleAuth()">Admin Girişi</button>
+    <!-- Giriş Dialog'u -->
+    <div id="authDialog" class="auth-dialog">
+        <h3>Admin Girişi</h3>
+        <input type="email" id="adminEmail" placeholder="Email" value="rmznlhn@gmail.com"><br><br>
+        <input type="password" id="adminPass" placeholder="Şifre"><br><br>
+        <button onclick="performLogin()">Giriş Yap</button>
+        <button onclick="hideAuthDialog()">İptal</button>
     </div>
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <script>
-        // Firebase konfigürasyonu (KENDİ PROJENİZİN BİLGİLERİYLE DEĞİŞTİRİN)
-        const firebaseConfig = {
-            apiKey: "AIzaSyAnbKw-SirG6PIotPleIaJHzc95KDwQxNA",
-            authDomain: "notlarim-7b7a1.firebaseapp.com",
-            databaseURL: "https://notlarim-7b7a1-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "notlarim-7b7a1",
-            storageBucket: "notlarim-7b7a1.appspot.com",
-            messagingSenderId: "839078577829",
-            appId: "1:839078577829:web:05ad4e46d05e9dc03eaf4c"
-        };
-
-        // Firebase'i başlat
+        // Firebase konfigürasyonu (Aynen kalacak)
+        const firebaseConfig = { /* ... */ };
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const auth = firebase.auth();
 
-        // ADMIN BİLGİLERİ (SİZİNKİLERLE DEĞİŞTİRİLDİ)
+        // ADMIN EMAIL (Sabit kalabilir)
         const ADMIN_EMAIL = "rmznlhn@gmail.com";
-        const ADMIN_PASS = "15641564";
 
-        // Elementler
-        const notesContainer = document.getElementById('notesContainer');
-        const authBtn = document.getElementById('authBtn');
-        const authStatus = document.getElementById('authStatus');
-
-        // Auth durum takibi
-        auth.onAuthStateChanged(user => {
-            if (user && user.email === ADMIN_EMAIL) {
-                authStatus.textContent = `Admin olarak giriş yapıldı: ${user.email}`;
-                authStatus.style.color = "green";
-                authBtn.textContent = "Çıkış Yap";
-                loadNotes();
-            } else {
-                authStatus.textContent = "Giriş yapılmadı";
-                authStatus.style.color = "red";
-                authBtn.textContent = "Admin Girişi";
-                loadNotes();
-            }
-        });
-
-        // Giriş/Çıkış işlemi
+        // Giriş fonksiyonları
         function handleAuth() {
             if (auth.currentUser) {
                 auth.signOut();
             } else {
-                auth.signInWithEmailAndPassword(ADMIN_EMAIL, ADMIN_PASS)
-                    .catch(error => alert("Hata: " + error.message));
+                document.getElementById('adminEmail').value = ADMIN_EMAIL;
+                document.getElementById('authDialog').style.display = 'block';
             }
         }
 
-        // Notları yükle
-        function loadNotes() {
-            database.ref('notes').on('value', snapshot => {
-                notesContainer.innerHTML = '';
-                const notes = snapshot.val();
-                
-                if (notes) {
-                    Object.keys(notes).forEach(key => {
-                        const note = notes[key];
-                        const isAdmin = auth.currentUser && auth.currentUser.email === ADMIN_EMAIL;
-                        
-                        notesContainer.innerHTML += `
-                            <div class="note">
-                                ${note.text}
-                                ${isAdmin ? 
-                                    `<button class="delete-btn" onclick="deleteNote('${key}')">
-                                        <i class="fas fa-trash"></i> Sil
-                                    </button>` 
-                                    : ''}
-                                <div style="margin-top:10px;font-size:12px;color:#666;">
-                                    ${note.date || ''}
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-            });
+        function performLogin() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPass').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => hideAuthDialog())
+                .catch(error => alert("Hatalı giriş: " + error.message));
         }
 
-        // Not silme (sadece admin)
-        function deleteNote(noteId) {
-            if (confirm("Bu notu silmek istediğinize emin misiniz?")) {
-                database.ref('notes/' + noteId).remove()
-                    .then(() => alert("Not silindi!"))
-                    .catch(error => alert("Hata: " + error.message));
-            }
+        function hideAuthDialog() {
+            document.getElementById('authDialog').style.display = 'none';
+            document.getElementById('adminPass').value = "";
         }
+
+        /* Kalan kodlar aynen kalacak */
     </script>
 </body>
 </html>
