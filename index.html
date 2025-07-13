@@ -36,6 +36,18 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             position: relative;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .note-content {
+            flex-grow: 1;
+            overflow-wrap: break-word;
+            margin-bottom: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
         }
         .delete-btn {
             position: absolute;
@@ -47,6 +59,11 @@
             border-radius: 4px;
             padding: 5px 10px;
             cursor: pointer;
+        }
+        .note-date {
+            font-size: 12px;
+            color: #666;
+            align-self: flex-end;
         }
         #adminPanel {
             position: fixed;
@@ -84,6 +101,7 @@
             padding: 8px;
             width: 100%;
             box-sizing: border-box;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -108,8 +126,8 @@
     <!-- Giriş Dialog'u -->
     <div id="authDialog" class="auth-dialog">
         <h3><i class="fas fa-lock"></i> Admin Girişi</h3>
-        <input type="email" id="adminEmail" placeholder="Email" value="rmznlhn@gmail.com"><br><br>
-        <input type="password" id="adminPass" placeholder="Şifre"><br><br>
+        <input type="email" id="adminEmail" placeholder="Email" value="rmznlhn@gmail.com">
+        <input type="password" id="adminPass" placeholder="Şifre">
         <button onclick="performLogin()"><i class="fas fa-sign-in-alt"></i> Giriş Yap</button>
         <button onclick="hideAuthDialog()" style="background: #f44336;"><i class="fas fa-times"></i> İptal</button>
     </div>
@@ -197,13 +215,15 @@
                         const noteElement = document.createElement('div');
                         noteElement.className = 'note';
                         noteElement.innerHTML = `
-                            ${note.text}
+                            <div class="note-content">
+                                ${note.text}
+                            </div>
                             ${isAdmin ? 
                                 `<button class="delete-btn" onclick="deleteNote('${key}')">
                                     <i class="fas fa-trash"></i> Sil
                                 </button>` 
                                 : ''}
-                            <div style="margin-top:10px;font-size:12px;color:#666;">
+                            <div class="note-date">
                                 ${note.date || ''}
                             </div>
                         `;
