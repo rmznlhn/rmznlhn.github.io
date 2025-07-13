@@ -3,47 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Not Defteri</title>
+    <title>Admin Kontrollü Not Defteri</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
         }
-        textarea {
-            width: 100%;
-            height: 200px;
-            margin-bottom: 10px;
+        .note {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            position: relative;
         }
-        button {
-            padding: 10px 15px;
-            background: #4285F4;
+        .delete-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: #ff4444;
             color: white;
             border: none;
             border-radius: 4px;
+            padding: 5px 10px;
             cursor: pointer;
+        }
+        #adminPanel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        #authStatus {
+            margin-top: 10px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>Not Defteri</h1>
-    <textarea id="noteInput" placeholder="Notunuzu buraya yazın..."></textarea>
-    <button id="saveBtn">Kaydet</button>
-    <div id="notes"></div>
+    <h1><i class="fas fa-lock"></i> Admin Kontrollü Not Defteri</h1>
+    <div id="notesContainer"></div>
 
-    <!-- Firebase Kütüphaneleri -->
+    <div id="adminPanel">
+        <div id="authStatus">Giriş yapılmadı</div>
+        <button id="authBtn" onclick="handleAuth()">Admin Girişi</button>
+    </div>
+
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // Firebase konfigürasyonu (SİZİN BİLGİLERİNİZLE AYNI)
+        // Firebase konfigürasyonu (KENDİ PROJENİZİN BİLGİLERİYLE DEĞİŞTİRİN)
         const firebaseConfig = {
             apiKey: "AIzaSyAnbKw-SirG6PIotPleIaJHzc95KDwQxNA",
             authDomain: "notlarim-7b7a1.firebaseapp.com",
             databaseURL: "https://notlarim-7b7a1-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "notlarim-7b7a1",
-            storageBucket: "notlarim-7b7a1.firebasestorage.app",
+            storageBucket: "notlarim-7b7a1.appspot.com",
             messagingSenderId: "839078577829",
             appId: "1:839078577829:web:05ad4e46d05e9dc03eaf4c"
         };
@@ -51,41 +74,79 @@
         // Firebase'i başlat
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const auth = firebase.auth();
+
+        // ADMIN BİLGİLERİ (SİZİNKİLERLE DEĞİŞTİRİLDİ)
+        const ADMIN_EMAIL = "rmznlhn@gmail.com";
+        const ADMIN_PASS = "15641564";
 
         // Elementler
-        const noteInput = document.getElementById('noteInput');
-        const saveBtn = document.getElementById('saveBtn');
-        const notesDiv = document.getElementById('notes');
+        const notesContainer = document.getElementById('notesContainer');
+        const authBtn = document.getElementById('authBtn');
+        const authStatus = document.getElementById('authStatus');
 
-        // Not kaydetme
-        saveBtn.addEventListener('click', () => {
-            const noteText = noteInput.value.trim();
-            if (noteText) {
-                database.ref('notes').push({
-                    text: noteText,
-                    date: new Date().toLocaleString()
-                });
-                noteInput.value = '';
+        // Auth durum takibi
+        auth.onAuthStateChanged(user => {
+            if (user && user.email === ADMIN_EMAIL) {
+                authStatus.textContent = `Admin olarak giriş yapıldı: ${user.email}`;
+                authStatus.style.color = "green";
+                authBtn.textContent = "Çıkış Yap";
+                loadNotes();
+            } else {
+                authStatus.textContent = "Giriş yapılmadı";
+                authStatus.style.color = "red";
+                authBtn.textContent = "Admin Girişi";
+                loadNotes();
             }
         });
 
-        // Notları göster
-        database.ref('notes').on('value', (snapshot) => {
-            notesDiv.innerHTML = '';
-            const notes = snapshot.val();
-            
-            if (notes) {
-                Object.keys(notes).forEach(key => {
-                    const note = notes[key];
-                    notesDiv.innerHTML += `
-                        <div style="background:#f5f5f5; padding:10px; margin:10px 0; border-radius:5px;">
-                            <p>${note.text}</p>
-                            <small>${note.date}</small>
-                        </div>
-                    `;
-                });
+        // Giriş/Çıkış işlemi
+        function handleAuth() {
+            if (auth.currentUser) {
+                auth.signOut();
+            } else {
+                auth.signInWithEmailAndPassword(ADMIN_EMAIL, ADMIN_PASS)
+                    .catch(error => alert("Hata: " + error.message));
             }
-        });
+        }
+
+        // Notları yükle
+        function loadNotes() {
+            database.ref('notes').on('value', snapshot => {
+                notesContainer.innerHTML = '';
+                const notes = snapshot.val();
+                
+                if (notes) {
+                    Object.keys(notes).forEach(key => {
+                        const note = notes[key];
+                        const isAdmin = auth.currentUser && auth.currentUser.email === ADMIN_EMAIL;
+                        
+                        notesContainer.innerHTML += `
+                            <div class="note">
+                                ${note.text}
+                                ${isAdmin ? 
+                                    `<button class="delete-btn" onclick="deleteNote('${key}')">
+                                        <i class="fas fa-trash"></i> Sil
+                                    </button>` 
+                                    : ''}
+                                <div style="margin-top:10px;font-size:12px;color:#666;">
+                                    ${note.date || ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            });
+        }
+
+        // Not silme (sadece admin)
+        function deleteNote(noteId) {
+            if (confirm("Bu notu silmek istediğinize emin misiniz?")) {
+                database.ref('notes/' + noteId).remove()
+                    .then(() => alert("Not silindi!"))
+                    .catch(error => alert("Hata: " + error.message));
+            }
+        }
     </script>
 </body>
 </html>
