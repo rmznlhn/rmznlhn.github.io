@@ -6,7 +6,57 @@
     <title>Admin Kontrollü Not Defteri</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Önceki CSS kodları aynen kalacak */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f9f9f9;
+        }
+        #noteForm {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        #noteInput {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .note {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .delete-btn {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        #adminPanel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
         .auth-dialog {
             display: none;
             position: fixed;
@@ -22,32 +72,136 @@
     </style>
 </head>
 <body>
-    <!-- Önceki HTML yapısı aynen kalacak -->
-
+    <h1><i class="fas fa-book"></i> Not Defteri</h1>
+    
+    <!-- Not Ekleme Formu -->
+    <div id="noteForm">
+        <textarea id="noteInput" placeholder="Notunuzu buraya yazın..."></textarea>
+        <button onclick="addNote()"><i class="fas fa-plus"></i> Not Ekle</button>
+    </div>
+    
+    <!-- Notların Listeleneceği Alan -->
+    <div id="notesContainer"></div>
+    
+    <!-- Admin Paneli -->
+    <div id="adminPanel">
+        <button id="authBtn" onclick="handleAuth()"><i class="fas fa-user-shield"></i> Admin Girişi</button>
+        <div id="authStatus" style="margin-top:5px;font-size:12px;color:#666;">Giriş yapılmadı</div>
+    </div>
+    
     <!-- Giriş Dialog'u -->
     <div id="authDialog" class="auth-dialog">
-        <h3>Admin Girişi</h3>
+        <h3><i class="fas fa-lock"></i> Admin Girişi</h3>
         <input type="email" id="adminEmail" placeholder="Email" value="rmznlhn@gmail.com"><br><br>
         <input type="password" id="adminPass" placeholder="Şifre"><br><br>
-        <button onclick="performLogin()">Giriş Yap</button>
-        <button onclick="hideAuthDialog()">İptal</button>
+        <button onclick="performLogin()"><i class="fas fa-sign-in-alt"></i> Giriş Yap</button>
+        <button onclick="hideAuthDialog()"><i class="fas fa-times"></i> İptal</button>
     </div>
 
-    <script>
-        // Firebase konfigürasyonu (Aynen kalacak)
-        const firebaseConfig = { /* ... */ };
-        firebase.initializeApp(firebaseConfig);
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-        // ADMIN EMAIL (Sabit kalabilir)
+    <script>
+        // Firebase konfigürasyonu (KENDİ BİLGİLERİNİZLE DEĞİŞTİRİN)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnbKw-SirG6PIotPleIaJHzc95KDwQxNA",
+            authDomain: "notlarim-7b7a1.firebaseapp.com",
+            databaseURL: "https://notlarim-7b7a1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "notlarim-7b7a1",
+            storageBucket: "notlarim-7b7a1.appspot.com",
+            messagingSenderId: "839078577829",
+            appId: "1:839078577829:web:05ad4e46d05e9dc03eaf4c"
+        };
+
+        // Firebase'i başlat
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // Sabit admin emaili
         const ADMIN_EMAIL = "rmznlhn@gmail.com";
 
-        // Giriş fonksiyonları
+        // Elementler
+        const noteInput = document.getElementById('noteInput');
+        const notesContainer = document.getElementById('notesContainer');
+        const authBtn = document.getElementById('authBtn');
+        const authStatus = document.getElementById('authStatus');
+        const authDialog = document.getElementById('authDialog');
+
+        // Auth durum takibi
+        auth.onAuthStateChanged(user => {
+            if (user && user.email === ADMIN_EMAIL) {
+                authStatus.textContent = `Admin: ${user.email}`;
+                authStatus.style.color = "green";
+                authBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Çıkış Yap';
+                loadNotes();
+            } else {
+                authStatus.textContent = "Giriş yapılmadı";
+                authStatus.style.color = "red";
+                authBtn.innerHTML = '<i class="fas fa-user-shield"></i> Admin Girişi';
+                loadNotes();
+            }
+        });
+
+        // Not ekleme
+        function addNote() {
+            const text = noteInput.value.trim();
+            if (text) {
+                database.ref('notes').push({
+                    text: text,
+                    date: new Date().toLocaleString()
+                });
+                noteInput.value = "";
+            } else {
+                alert("Lütfen not metni girin!");
+            }
+        }
+
+        // Notları yükle
+        function loadNotes() {
+            database.ref('notes').on('value', snapshot => {
+                notesContainer.innerHTML = '';
+                const notes = snapshot.val();
+                
+                if (notes) {
+                    Object.keys(notes).forEach(key => {
+                        const note = notes[key];
+                        const isAdmin = auth.currentUser && auth.currentUser.email === ADMIN_EMAIL;
+                        
+                        notesContainer.innerHTML += `
+                            <div class="note">
+                                ${note.text}
+                                ${isAdmin ? 
+                                    `<button class="delete-btn" onclick="deleteNote('${key}')">
+                                        <i class="fas fa-trash"></i> Sil
+                                    </button>` 
+                                    : ''}
+                                <div style="margin-top:10px;font-size:12px;color:#666;">
+                                    ${note.date || ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            });
+        }
+
+        // Not silme (sadece admin)
+        function deleteNote(noteId) {
+            if (confirm("Bu notu silmek istediğinize emin misiniz?")) {
+                database.ref('notes/' + noteId).remove();
+            }
+        }
+
+        // Giriş/Çıkış işlemi
         function handleAuth() {
             if (auth.currentUser) {
                 auth.signOut();
             } else {
                 document.getElementById('adminEmail').value = ADMIN_EMAIL;
-                document.getElementById('authDialog').style.display = 'block';
+                authDialog.style.display = 'block';
             }
         }
 
@@ -61,11 +215,9 @@
         }
 
         function hideAuthDialog() {
-            document.getElementById('authDialog').style.display = 'none';
+            authDialog.style.display = 'none';
             document.getElementById('adminPass').value = "";
         }
-
-        /* Kalan kodlar aynen kalacak */
     </script>
 </body>
 </html>
