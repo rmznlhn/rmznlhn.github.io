@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -30,7 +31,6 @@
             resize: vertical;
         }
         .note {
-            background: white;
             padding: 15px;
             margin-bottom: 15px;
             border-radius: 8px;
@@ -40,6 +40,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            color: #333;
         }
         .note-content {
             flex-grow: 1;
@@ -53,7 +54,7 @@
             position: absolute;
             right: 15px;
             top: 15px;
-            background: #ff4444;
+            background: rgba(0,0,0,0.3);
             color: white;
             border: none;
             border-radius: 4px;
@@ -62,7 +63,8 @@
         }
         .note-date {
             font-size: 12px;
-            color: #666;
+            color: inherit;
+            opacity: 0.8;
             align-self: flex-end;
         }
         #adminPanel {
@@ -106,7 +108,7 @@
     </style>
 </head>
 <body>
-    <h1><i class="fas fa-book"></i> Not Defteri</h1>
+    <h1><i class="fas fa-book"></i> Renkli Not Defteri</h1>
     
     <!-- Not Ekleme Formu -->
     <div id="noteForm">
@@ -164,6 +166,19 @@
         const authStatus = document.getElementById('authStatus');
         const authDialog = document.getElementById('authDialog');
 
+        // Pastel renk paleti
+        const colorPalette = [
+            '#FFD1DC', '#FFECB8', '#E1F7D5', '#C4F1F9', '#D1C4E9',
+            '#F8BBD0', '#FFE0B2', '#C8E6C9', '#B3E5FC', '#D1C4E9',
+            '#F5C6EC', '#FFCCBC', '#DCEDC8', '#B2EBF2', '#C5CAE9',
+            '#F8BBD0', '#FFE0B2', '#C8E6C9', '#B3E5FC', '#D1C4E9'
+        ];
+
+        // Rastgele renk seçimi
+        function getRandomColor() {
+            return colorPalette[Math.floor(Math.random() * colorPalette.length)];
+        }
+
         // Sayfa yüklendiğinde notları yükle
         window.onload = function() {
             loadNotes();
@@ -188,9 +203,11 @@
         function addNote() {
             const text = noteInput.value.trim();
             if (text) {
+                const color = getRandomColor();
                 database.ref('notes').push({
                     text: text,
-                    date: new Date().toLocaleString()
+                    date: new Date().toLocaleString(),
+                    color: color
                 }).then(() => {
                     noteInput.value = "";
                 }).catch(error => {
@@ -214,12 +231,18 @@
                         
                         const noteElement = document.createElement('div');
                         noteElement.className = 'note';
+                        noteElement.style.background = note.color || '#ffffff';
+                        
+                        // Arkaplan rengine göre metin rengini ayarla
+                        const textColor = getContrastColor(note.color || '#ffffff');
+                        noteElement.style.color = textColor;
+                        
                         noteElement.innerHTML = `
                             <div class="note-content">
                                 ${note.text}
                             </div>
                             ${isAdmin ? 
-                                `<button class="delete-btn" onclick="deleteNote('${key}')">
+                                `<button class="delete-btn" onclick="deleteNote('${key}')" style="color: ${textColor}; background: rgba(0,0,0,0.2);">
                                     <i class="fas fa-trash"></i> Sil
                                 </button>` 
                                 : ''}
@@ -236,6 +259,20 @@
                 console.error("Notlar yüklenirken hata:", error);
                 notesContainer.innerHTML = '<p>Notlar yüklenirken bir hata oluştu.</p>';
             });
+        }
+
+        // Arkaplan rengine uygun kontrast rengi belirle
+        function getContrastColor(hexColor) {
+            // Hex rengini RGB'ye çevir
+            const r = parseInt(hexColor.substr(1, 2), 16);
+            const g = parseInt(hexColor.substr(3, 2), 16);
+            const b = parseInt(hexColor.substr(5, 2), 16);
+            
+            // Parlaklık hesapla
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            
+            // Parlaklığa göre siyah veya beyaz döndür
+            return brightness > 128 ? '#333333' : '#ffffff';
         }
 
         // Not silme (sadece admin)
