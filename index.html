@@ -69,6 +69,22 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
             z-index: 1000;
         }
+        button {
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        input {
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -95,7 +111,7 @@
         <input type="email" id="adminEmail" placeholder="Email" value="rmznlhn@gmail.com"><br><br>
         <input type="password" id="adminPass" placeholder="Şifre"><br><br>
         <button onclick="performLogin()"><i class="fas fa-sign-in-alt"></i> Giriş Yap</button>
-        <button onclick="hideAuthDialog()"><i class="fas fa-times"></i> İptal</button>
+        <button onclick="hideAuthDialog()" style="background: #f44336;"><i class="fas fa-times"></i> İptal</button>
     </div>
 
     <!-- Firebase -->
@@ -104,7 +120,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // Firebase konfigürasyonu (KENDİ BİLGİLERİNİZLE DEĞİŞTİRİN)
+        // Firebase konfigürasyonu
         const firebaseConfig = {
             apiKey: "AIzaSyAnbKw-SirG6PIotPleIaJHzc95KDwQxNA",
             authDomain: "notlarim-7b7a1.firebaseapp.com",
@@ -130,6 +146,11 @@
         const authStatus = document.getElementById('authStatus');
         const authDialog = document.getElementById('authDialog');
 
+        // Sayfa yüklendiğinde notları yükle
+        window.onload = function() {
+            loadNotes();
+        };
+
         // Auth durum takibi
         auth.onAuthStateChanged(user => {
             if (user && user.email === ADMIN_EMAIL) {
@@ -152,8 +173,11 @@
                 database.ref('notes').push({
                     text: text,
                     date: new Date().toLocaleString()
+                }).then(() => {
+                    noteInput.value = "";
+                }).catch(error => {
+                    alert("Not eklenirken hata oluştu: " + error.message);
                 });
-                noteInput.value = "";
             } else {
                 alert("Lütfen not metni girin!");
             }
@@ -170,28 +194,37 @@
                         const note = notes[key];
                         const isAdmin = auth.currentUser && auth.currentUser.email === ADMIN_EMAIL;
                         
-                        notesContainer.innerHTML += `
-                            <div class="note">
-                                ${note.text}
-                                ${isAdmin ? 
-                                    `<button class="delete-btn" onclick="deleteNote('${key}')">
-                                        <i class="fas fa-trash"></i> Sil
-                                    </button>` 
-                                    : ''}
-                                <div style="margin-top:10px;font-size:12px;color:#666;">
-                                    ${note.date || ''}
-                                </div>
+                        const noteElement = document.createElement('div');
+                        noteElement.className = 'note';
+                        noteElement.innerHTML = `
+                            ${note.text}
+                            ${isAdmin ? 
+                                `<button class="delete-btn" onclick="deleteNote('${key}')">
+                                    <i class="fas fa-trash"></i> Sil
+                                </button>` 
+                                : ''}
+                            <div style="margin-top:10px;font-size:12px;color:#666;">
+                                ${note.date || ''}
                             </div>
                         `;
+                        notesContainer.appendChild(noteElement);
                     });
+                } else {
+                    notesContainer.innerHTML = '<p>Henüz not eklenmedi.</p>';
                 }
+            }, error => {
+                console.error("Notlar yüklenirken hata:", error);
+                notesContainer.innerHTML = '<p>Notlar yüklenirken bir hata oluştu.</p>';
             });
         }
 
         // Not silme (sadece admin)
         function deleteNote(noteId) {
             if (confirm("Bu notu silmek istediğinize emin misiniz?")) {
-                database.ref('notes/' + noteId).remove();
+                database.ref('notes/' + noteId).remove()
+                    .catch(error => {
+                        alert("Not silinirken hata oluştu: " + error.message);
+                    });
             }
         }
 
@@ -209,9 +242,24 @@
             const email = document.getElementById('adminEmail').value;
             const password = document.getElementById('adminPass').value;
             
+            if (!email || !password) {
+                alert("Lütfen email ve şifre girin!");
+                return;
+            }
+            
             auth.signInWithEmailAndPassword(email, password)
-                .then(() => hideAuthDialog())
-                .catch(error => alert("Hatalı giriş: " + error.message));
+                .then(() => {
+                    hideAuthDialog();
+                })
+                .catch(error => {
+                    let errorMessage = "Giriş başarısız!";
+                    if (error.code === "auth/wrong-password") {
+                        errorMessage = "Hatalı şifre!";
+                    } else if (error.code === "auth/user-not-found") {
+                        errorMessage = "Kullanıcı bulunamadı!";
+                    }
+                    alert(errorMessage);
+                });
         }
 
         function hideAuthDialog() {
