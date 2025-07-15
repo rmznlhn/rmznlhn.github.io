@@ -2,36 +2,78 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ESP32 Direksiyon Projesi</title>
+  <title>Gram Altın ve Dolar</title>
   <style>
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: white;
-      padding: 40px;
+      font-family: sans-serif;
+      background: #f0f0f0;
+      text-align: center;
+      padding: 52px;
     }
-
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      display: inline-block;
+    }
     h1 {
-      color: #ffcc00;
+      font-size: 22px;
+      margin: 0;
     }
-
-    p {
-      max-width: 700px;
-      line-height: 1.6;
-    }
-
-    a {
-      color: #ffaa00;
-      text-decoration: underline;
+    .value {
+      font-size: 28px;
+      color: darkgreen;
+      margin: 10px 0;
     }
   </style>
 </head>
 <body>
-  <h1>ESP32 Direksiyon Projesi</h1>
-  <p>Bu projede ESP32 kullanarak Android telefonlarla çalışan bir Bluetooth direksiyon sistemi geliştirdim.</p>
-  <p>Bağlantı Blynk veya özel uygulama ile sağlanıyor. Oyunlar bu direksiyonla kontrol edilebiliyor.</p>
-  <p><a href="index.html">← Geri dön</a></p>
+  <div class="card">
+    <h1>Dolar Kuru</h1>
+    <div class="value" id="dolar">yükleniyor...</div>
+  </div>
+
+  <div class="card">
+    <h1>Gram Altın</h1>
+    <div class="value" id="altin">yükleniyor...</div>
+  </div>
+
+  <script>
+    let usdTry = null;
+    let xauUsd = null;
+
+    // Dolar kuru (USD -> TRY)
+    fetch('https://api.exchangerate.host/latest?base=USD&symbols=TRY')
+      .then(res => res.json())
+      .then(data => {
+        usdTry = data.rates.TRY;
+        document.getElementById('dolar').innerText = usdTry.toFixed(2) + ' TL';
+        hesaplaGramAltin();
+      })
+      .catch(() => {
+        document.getElementById('dolar').innerText = 'veri alınamadı';
+      });
+
+    // Ons altın (XAU -> USD)
+    fetch('https://api.exchangerate.host/latest?base=XAU&symbols=USD')
+      .then(res => res.json())
+      .then(data => {
+        xauUsd = data.rates.USD;
+        hesaplaGramAltin();
+      })
+      .catch(() => {
+        document.getElementById('altin').innerText = 'veri alınamadı';
+      });
+
+    function hesaplaGramAltin() {
+      if (usdTry && xauUsd) {
+        const onsAltinFiyati = xauUsd;
+        const gramAltinTL = (onsAltinFiyati * usdTry) / 31.1;
+        document.getElementById('altin').innerText = gramAltinTL.toFixed(2) + ' TL';
+      }
+    }
+  </script>
 </body>
 </html>
